@@ -8,6 +8,8 @@
 
 배포된 페이지는 같은 주소의 AI 프록시를 사용합니다. GitHub 저장소에는 토큰을 저장하지 않으며, `GITHUB_TOKEN`은 Azure App Service 설정에서만 주입됩니다.
 
+GitHub의 `blob` 파일 보기에서는 HTML이 실행되지 않습니다. 저장소 HTML을 온라인에서 실행하려면 GitHub Pages 주소(활성화된 경우)를 사용하거나 위 Azure 주소를 사용하세요. `planner-config.js`는 GitHub Pages에서 Azure 프록시를 호출하도록 설정되어 있습니다.
+
 ## 기능
 - 24시간 × 10분 단위 드래그 일과 기록, 활동별 색상 범례
 - 과거/미래 날짜 조회 (◀▶, 캘린더 이동)
