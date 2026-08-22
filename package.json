@@ -1,0 +1,16 @@
+{
+  "name": "daily-planner-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Daily planner static app and GitHub Copilot AI proxy",
+  "scripts": {
+    "start": "node ai-proxy/server.js",
+    "test": "npm --prefix ai-proxy test"
+  },
+  "workspaces": [
+    "ai-proxy"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
+}

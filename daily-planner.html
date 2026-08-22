@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>하루 일과표</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+    background: #33415c;
+    padding: 24px;
+  }
+
+  .date-badge {
+    position: absolute;
+    top: 20px;
+    left: 24px;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+
+  .glass-panel {
+    max-width: 640px;
+    margin: 70px auto 30px;
+    padding: 28px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    display: flex;
+    gap: 24px;
+  }
+
+  h1 {
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    font-size: 1.4rem;
+    margin-bottom: 14px;
+  }
+
+  .table-area { flex: 1; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    user-select: none;
+  }
+
+  th, td {
+    border: 1px solid rgba(255,255,255,0.35);
+    text-align: center;
+  }
+
+  th {
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    background: rgba(255,255,255,0.12);
+  }
+
+  td.hour-label {
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    background: rgba(255,255,255,0.12);
+    white-space: nowrap;
+  }
+
+  td.slot {
+    height: 22px;
+    min-width: 26px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.06);
+    transition: background 0.08s;
+  }
+
+  td.slot:hover { background: rgba(255,255,255,0.3); }
+
+  td.slot.preview { background: rgba(255,255,255,0.55) !important; }
+
+  .legend {
+    width: 210px;
+    flex-shrink: 0;
+  }
+
+  .legend h2 {
+    color: #fff;
+    font-size: 1.05rem;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 0.85rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .legend-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.5);
+  }
+
+  .legend-item .del {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.7;
+    font-weight: bold;
+  }
+  .legend-item .del:hover { opacity: 1; }
+
+  .legend-empty {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    font-style: italic;
+  }
+
+  .comment-box {
+    margin-top: 16px;
+  }
+
+  .comment-box textarea {
+    width: 100%;
+    height: 110px;
+    resize: vertical;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.45);
+    background: rgba(255,255,255,0.25);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+  }
+  .comment-box textarea::placeholder { color: rgba(255,255,255,0.65); }
+
+  .comment-box .q-title {
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 12px 0 6px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .comment-box .q-title:first-child { margin-top: 0; }
+  .comment-box textarea.q-answer { height: 70px; }
+
+  /* 설정 버튼 */
+  .settings-btn {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    z-index: 10;
+    transition: transform 0.2s;
+  }
+  .settings-btn:hover { transform: rotate(45deg); }
+
+  .overview-btn {
+    position: absolute;
+    top: 22px;
+    right: 70px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .overview-btn:hover { background: rgba(255,255,255,0.35); }
+
+  .goal-banner {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    z-index: 5;
+    max-width: 40vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 한눈에 보기 캘린더 */
+  .month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 14px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .month-nav span.arrow { cursor: pointer; opacity: 0.8; user-select: none; }
+  .month-nav span.arrow:hover { opacity: 1; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .cal-grid .dow {
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 0;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .cal-cell {
+    min-height: 58px;
+    border-radius: 12px;
+    padding: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    transition: background 0.1s;
+  }
+  .cal-cell:hover { background: rgba(255,255,255,0.3); }
+  .cal-cell.empty { visibility: hidden; }
+  .cal-cell.today-cell { border: 2px solid #fff; }
+  .cal-cell .score-badge {
+    display: block;
+    margin-top: 6px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    padding: 3px 0;
+    color: #1e2a3a;
+  }
+
+  /* 설정 창 */
+  .settings-view {
+    display: none;
+    max-width: 640px;
+    margin: 70px auto 30px;
+    padding: 28px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.35);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  }
+
+  .settings-view h1 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .back-btn {
+    background: rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 10px;
+    color: #fff;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.45); }
+
+  .settings-desc {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .q-list { margin-bottom: 16px; }
+
+  .q-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .q-item .del {
+    margin-left: auto;
+    cursor: pointer;
+    opacity: 0.7;
+    font-weight: bold;
+  }
+  .q-item .del:hover { opacity: 1; }
+
+  .q-add {
+    display: flex;
+    gap: 8px;
+  }
+
+  .q-add input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  .q-add button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 10px;
+    background: #4f7cff;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .q-add button:hover { background: #3b66e8; }
+
+  .section-title {
+    color: #fff;
+    font-size: 1rem;
+    margin: 22px 0 10px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .section-title:first-of-type { margin-top: 6px; }
+
+  .profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .profile-form label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .profile-form label input,
+  .profile-form label textarea {
+    flex: 1;
+    max-width: 320px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+  }
+  .profile-form label textarea { height: 64px; resize: vertical; }
+
+  .preset-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .preset-chips:empty { display: none; }
+
+  .preset-chips .chip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.55);
+    color: #333;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .preset-chips .chip:hover { background: #fff; }
+
+  .nav-arrow {
+    cursor: pointer;
+    font-size: 0.85rem;
+    opacity: 0.8;
+    user-select: none;
+    margin: 0 6px;
+  }
+  .nav-arrow:hover { opacity: 1; }
+
+  .plan-box { margin-top: 16px; }
+
+  .plan-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+  }
+  .plan-header .q-title { margin: 0; }
+
+  .ai-btn {
+    padding: 5px 12px;
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 999px;
+    background: linear-gradient(135deg, #8e6cf0, #4f7cff);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .ai-btn:hover { opacity: 0.85; }
+  .ai-btn:disabled { opacity: 0.5; cursor: wait; }
+
+  #planList { margin-top: 8px; }
+
+  .plan-add {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .plan-add input {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.5);
+    background: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    outline: none;
+    min-width: 0;
+  }
+  .plan-add input[type="text"] { flex: 1; }
+  .plan-add input[type="number"] { width: 62px; }
+  .plan-add button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    background: #4f7cff;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .plan-add button:hover { background: #3b66e8; }
+
+  .plan-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    margin-bottom: 6px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 0.83rem;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .plan-item .del { margin-left: auto; cursor: pointer; opacity: 0.7; font-weight: bold; }
+  .plan-item .del:hover { opacity: 1; }
+
+  .todo-box { margin-top: 16px; }
+  .todo-box .q-title { margin-bottom: 6px; }
+  .todo-item input[type="checkbox"] { accent-color: #4f7cff; cursor: pointer; }
+  .todo-item.done span.txt { text-decoration: line-through; opacity: 0.6; }
+
+  body.readonly td.slot { cursor: default; }
+  body.readonly td.slot:hover { background: rgba(255,255,255,0.06); }
+
+  .submit-btn {
+    margin-top: 12px;
+    width: 100%;
+    padding: 11px;
+    border: none;
+    border-radius: 12px;
+    background: #4f7cff;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .submit-btn:hover { background: #3b66e8; }
+  .submit-btn.done { background: #00b894; }
+
+  /* 설명 입력 모달 */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 20px;
+    padding: 26px;
+    width: 320px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .modal h3 {
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  .modal .time-range {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    outline: none;
+    margin-bottom: 14px;
+  }
+
+  .modal .btns { display: flex; gap: 8px; justify-content: flex-end; }
+
+  .modal button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .modal .ok { background: #4f7cff; color: #fff; }
+  .modal .ok:hover { background: #3b66e8; }
+  .modal .cancel { background: rgba(255,255,255,0.6); color: #333; }
+
+  .help-btn {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    border: 1px solid rgba(255,255,255,0.45);
+    border-radius: 999px;
+    padding: 8px 13px;
+    color: #fff;
+    background: rgba(255,255,255,0.16);
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.16);
+  }
+  .help-btn:hover, .help-btn:focus-visible { background: rgba(255,255,255,0.3); outline: 2px solid #fff; outline-offset: 2px; }
+  .help-content { color: #fff; line-height: 1.65; font-size: 0.9rem; }
+  .help-content h4 { margin: 14px 0 4px; font-size: 0.98rem; }
+  .help-content h4:first-child { margin-top: 0; }
+  .help-content ul { margin: 0; padding-left: 20px; }
+  .help-content .note { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.16); }
+  .first-visit { max-width: 430px; }
+  .first-visit label { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 0.85rem; margin-top: 14px; }
+  @media (max-width: 720px) {
+    body { padding: 16px; }
+    .help-btn { top: 14px; right: 16px; }
+    .date-badge { left: 16px; top: 18px; }
+    .glass-panel { margin-top: 64px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="date-badge">
+  <span class="nav-arrow" id="prevDay" title="이전 날">◀</span>
+  <span id="dateText" style="cursor:pointer" title="캘린더 열기"></span>
+  <input type="date" id="datePicker" style="position:absolute; opacity:0; pointer-events:none; width:0; height:0;">
+  <span class="nav-arrow" id="nextDay" title="다음 날">▶</span>
+</div>
+<button class="settings-btn" id="btnSettings" title="설정">⚙️</button>
+<button class="overview-btn" id="btnOverview" title="한눈에 보기">📅 한눈에 보기</button>
+<button class="help-btn" id="btnHelp" type="button" title="사용 방법 도움말" aria-label="사용 방법 도움말">? 도움말</button>
+<div class="goal-banner" id="goalBanner"></div>
+
+<div class="glass-panel" id="mainView">
+  <div class="table-area">
+    <h1 id="pageTitle">📝 하루 일과표</h1>
+    <table id="planner">
+      <tbody id="plannerBody"></tbody>
+    </table>
+  </div>
+  <div class="legend">
+    <div id="legendList"><div class="legend-empty">표를 드래그하여 일과를 추가하세요</div></div>
+    <div class="comment-box" id="commentArea"></div>
+    <div class="plan-box" id="planBox" style="display:none">
+      <div class="plan-header">
+        <div class="q-title" id="planBoxTitle">📋 대략적인 계획</div>
+        <button class="ai-btn" id="btnAiPlan" title="프로필과 상황을 바탕으로 AI가 계획을 생성합니다">✨ AI 생성</button>
+      </div>
+      <div id="planList"></div>
+      <div class="plan-add">
+        <input type="text" id="planName" placeholder="일과 (예: 공부)" autocomplete="off">
+        <input type="number" id="planHours" placeholder="시간" min="0" step="0.5">
+        <button id="btnAddPlan">추가</button>
+      </div>
+    </div>
+    <div class="todo-box" id="todoBox" style="display:none">
+      <div class="q-title">✅ 할 일 (Todo)</div>
+      <div id="todoList"></div>
+      <div class="q-add" id="todoAdd" style="margin-top:8px;">
+        <input type="text" id="todoInput" placeholder="할 일을 입력하세요" autocomplete="off">
+        <button id="btnAddTodo">추가</button>
+      </div>
+    </div>
+    <button class="submit-btn" id="btnSubmit">제출하기</button>
+  </div>
+</div>
+
+<div class="settings-view" id="onboardView">
+  <h1>👤 프로필 설정</h1>
+  <div class="settings-desc">일과표를 시작하기 전에 프로필을 입력해주세요. 목표와 계획은 AI 피드백에 활용됩니다.</div>
+  <div class="profile-form">
+    <label>이름 <input type="text" id="obName" placeholder="홍길동" autocomplete="off"></label>
+    <label>생년월일 <input type="date" id="obBirth"></label>
+    <label>직업 <input type="text" id="obJob" placeholder="학생, 개발자..." autocomplete="off"></label>
+    <label>목표 <input type="text" id="obGoal" placeholder="예: 토익 900점, 풀스택 개발자 되기..." autocomplete="off"></label>
+    <label style="align-items:flex-start">현재 상황 <textarea id="obSituation" placeholder="예: 시험 2주 전, 체력이 부족함..."></textarea></label>
+    <label style="align-items:flex-start">계획 <textarea id="obPlan" placeholder="예: 매일 2시간 공부, 주 3회 운동..."></textarea><button type="button" class="ai-btn" id="btnObAiPlan">✨ AI 생성</button></label>
+  </div>
+  <button class="submit-btn" id="btnStartPlanner" style="margin-top:20px;">일과표 시작하기 →</button>
+</div>
+
+<div class="settings-view" id="overviewView">
+  <h1>📅 한눈에 보기 <button class="back-btn" id="btnOverviewBack">← 돌아가기</button></h1>
+  <div class="settings-desc">날짜별 일치도 점수를 한눈에 확인하세요. 날짜를 클릭하면 해당 일과표로 이동합니다.</div>
+  <div class="month-nav">
+    <span class="arrow" id="calPrev">◀</span>
+    <span id="calTitle"></span>
+    <span class="arrow" id="calNext">▶</span>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+</div>
+
+<div class="settings-view" id="settingsView">
+  <h1>⚙️ 설정 <button class="back-btn" id="btnBack">← 돌아가기</button></h1>
+
+  <h2 class="section-title">👤 프로필</h2>
+  <div class="profile-form">
+    <label>이름 <input type="text" id="pfName" placeholder="홍길동" autocomplete="off"></label>
+    <label>생년월일 <input type="date" id="pfBirth"></label>
+    <label>직업 <input type="text" id="pfJob" placeholder="학생, 개발자..." autocomplete="off"></label>
+    <label>목표 <input type="text" id="pfGoal" placeholder="예: 토익 900점, 풀스택 개발자 되기..." autocomplete="off"></label>
+    <label>현재 상황 <textarea id="pfSituation" placeholder="예: 시험 2주 전, 체력이 부족함..."></textarea></label>
+    <label style="align-items:flex-start">계획 <textarea id="pfPlan" placeholder="예: 매일 2시간 공부, 주 3회 운동..."></textarea><span style="display:flex; flex-direction:column; gap:6px;"><button type="button" class="ai-btn" id="btnAiLongPlan" title="프로필을 바탕으로 규칙적·장기적 계획을 생성합니다">✨ AI 생성</button><button type="button" class="ai-btn" id="btnUpdatePlan" title="지금까지의 실제 행동 기록을 분석하여 계획을 현실적으로 수정합니다">🔄 계획 업데이트</button></span></label>
+  </div>
+
+  <h2 class="section-title">⭐ 자주 쓰는 일과</h2>
+  <div class="settings-desc">미리 등록해두면 일과 입력 시 클릭 한 번으로 선택할 수 있습니다.</div>
+  <div class="q-list" id="presetList"></div>
+  <div class="q-add">
+    <input type="text" id="presetInput" placeholder="예: 수면, 공부, 운동..." autocomplete="off">
+    <button id="btnAddPreset">추가</button>
+  </div>
+
+  <h2 class="section-title">💬 의견란 질문</h2>
+  <div class="settings-desc">질문을 추가하면 의견란에 타이틀로 표시되고, 각 질문에 대한 대답을 적을 수 있습니다.</div>
+  <div class="q-list" id="qList"></div>
+  <div class="q-add">
+    <input type="text" id="qInput" placeholder="예: 오늘 가장 뿌듯했던 일은?" autocomplete="off">
+    <button id="btnAddQ">추가</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>일과 설명</h3>
+    <div class="time-range" id="modalTimeRange"></div>
+    <div class="preset-chips" id="presetChips"></div>
+    <input type="text" id="descInput" placeholder="예: 아침 운동, 공부, 수면..." autocomplete="off">
+    <div class="btns">
+      <button class="cancel" id="btnCancel">취소</button>
+      <button class="ok" id="btnOk">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="feedbackOverlay">
+  <div class="modal" style="width: 400px; max-height: 80vh; overflow-y: auto;">
+    <h3>📊 계획 대비 피드백</h3>
+    <div id="feedbackBody" style="color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.4); font-size:0.87rem;"></div>
+    <div class="btns" style="margin-top:14px;">
+      <button class="ok" id="btnFeedbackClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="helpOverlay" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal" style="width: 500px; max-height: 84vh; overflow-y: auto;">
+    <h3 id="helpTitle">📖 처음 사용하는 방법</h3>
+    <div class="help-content">
+      <h4>1. 프로필 입력</h4>
+      <p>설정에서 이름, 직업, 목표와 현재 상황을 입력하세요. 이 정보는 나에게 맞는 피드백을 만드는 데만 사용됩니다.</p>
+      <h4>2. 일과 드래그 기록</h4>
+      <p>시간표에서 시작 칸을 누른 채 끝 칸까지 끌어 일과를 선택합니다. 활동명을 입력하면 색상별로 기록됩니다.</p>
+      <h4>3. 제출하고 AI 피드백 확인</h4>
+      <p>오늘의 기록을 마친 뒤 <b>제출하기</b>를 누르면 계획 대비 일치도와 개선 방안을 확인할 수 있습니다.</p>
+      <h4>날짜와 계획</h4>
+      <ul>
+        <li>상단 ◀ ▶ 또는 날짜를 눌러 과거·미래 날짜로 이동합니다.</li>
+        <li>미래 날짜에서는 계획과 Todo를 미리 적어둘 수 있습니다.</li>
+        <li>📅 한눈에 보기에서 날짜별 기록과 점수를 확인합니다.</li>
+      </ul>
+      <h4>AI·설정 메뉴</h4>
+      <p>✨ AI 생성은 장기 계획을 만들고, 🔄 계획 업데이트는 기록된 행동을 바탕으로 계획을 조정합니다. 설정에서 프로필, 자주 쓰는 일과, 질문을 관리할 수 있습니다.</p>
+      <div class="note">데이터는 이 브라우저의 <b>localStorage</b>에 저장됩니다. AI 생성·피드백·계획 업데이트는 온라인 또는 로컬 AI 프록시가 실행 중일 때 사용할 수 있습니다.</div>
+    </div>
+    <label><input type="checkbox" id="hideHelp"> 다음부터 다시 보지 않기</label>
+    <div class="btns" style="margin-top:14px;">
+      <button class="ok" id="btnHelpClose" type="button">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="planner-config.js"></script>
+<script>
+// 배포 시 planner-config.js 또는 ?apiBaseUrl=...로 프록시 주소를 바꿀 수 있습니다.
+const apiQueryOverride = new URLSearchParams(window.location.search).get('apiBaseUrl');
+const configuredApiBaseUrl = apiQueryOverride || (window.PLANNER_CONFIG && window.PLANNER_CONFIG.apiBaseUrl) || '';
+const API_BASE_URL = (configuredApiBaseUrl || (window.location.protocol === 'file:' ? 'http://localhost:8787' : ''))
+  .replace(/\/+$/, '');
+function proxyFetch(path, options) {
+  return fetch(`${API_BASE_URL}${path}`, options);
+}
+</script>
+<script>
+// ── 날짜 & 조회 모드 ──
+const today = new Date();
+today.setHours(0,0,0,0);
+let viewDate = new Date(today);
+const days = ['일','월','화','수','목','금','토'];
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getMode() {
+  if (viewDate < today) return 'past';
+  if (viewDate > today) return 'future';
+  return 'today';
+}
+
+function renderDate() {
+  document.getElementById('dateText').textContent =
+    `${viewDate.getFullYear()}년 ${viewDate.getMonth()+1}월 ${viewDate.getDate()}일 (${days[viewDate.getDay()]})`;
+}
+
+document.getElementById('prevDay').addEventListener('click', () => shiftDay(-1));
+document.getElementById('nextDay').addEventListener('click', () => shiftDay(1));
+
+// ── 캘린더로 이동 ──
+const datePicker = document.getElementById('datePicker');
+document.getElementById('dateText').addEventListener('click', () => {
+  datePicker.value = dateKey(viewDate);
+  if (datePicker.showPicker) datePicker.showPicker();
+  else datePicker.click();
+});
+datePicker.addEventListener('change', () => {
+  if (!datePicker.value) return;
+  saveDay();
+  const [y, m, d] = datePicker.value.split('-').map(Number);
+  viewDate = new Date(y, m - 1, d);
+  loadDay();
+});
+
+function shiftDay(delta) {
+  saveDay();
+  viewDate.setDate(viewDate.getDate() + delta);
+  loadDay();
+}
+
+// ── 24행 × 6열 표 생성 ──
+const tbody = document.getElementById('plannerBody');
+for (let h = 0; h < 24; h++) {
+  const tr = document.createElement('tr');
+  const label = document.createElement('td');
+  label.className = 'hour-label';
+  label.textContent = h;
+  tr.appendChild(label);
+  for (let m = 0; m < 6; m++) {
+    const td = document.createElement('td');
+    td.className = 'slot';
+    td.dataset.index = h * 6 + m;  // 0 ~ 143 선형 인덱스
+    tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+}
+
+const slots = [...document.querySelectorAll('td.slot')];
+
+// ── 색상 팔레트 ──
+const palette = ['#ff6b6b','#4ecdc4','#ffd93d','#6c5ce7','#00b894','#fd79a8',
+                 '#fdcb6e','#0984e3','#e17055','#a29bfe','#55efc4','#fab1a0'];
+let colorIdx = 0;
+let activities = []; // {name, color, indices:Set}
+let plans = [];      // {name, hours}
+let dayScore = null; // 제출 피드백 일치도 점수
+let todos = [];      // {text, done} 일자별 할 일
+
+// ── 일자별 저장/불러오기 ──
+function saveDay() {
+  const area = document.getElementById('commentArea');
+  area.querySelectorAll('textarea').forEach(t => { answers[t.dataset.key] = t.value; });
+  const data = {
+    activities: activities.map(a => ({ name: a.name, color: a.color, indices: [...a.indices] })),
+    answers: { ...answers },
+    plans: [...plans],
+    score: dayScore,
+    todos: [...todos],
+    colorIdx
+  };
+  localStorage.setItem('plannerDay:' + dateKey(viewDate), JSON.stringify(data));
+}
+
+function loadDay() {
+  const raw = localStorage.getItem('plannerDay:' + dateKey(viewDate));
+  const data = raw ? JSON.parse(raw) : { activities: [], answers: {}, plans: [], colorIdx: 0 };
+
+  activities = data.activities.map(a => ({ name: a.name, color: a.color, indices: new Set(a.indices) }));
+  Object.keys(answers).forEach(k => delete answers[k]);
+  Object.assign(answers, data.answers || {});
+  plans = data.plans || [];
+  dayScore = (typeof data.score === 'number') ? data.score : null;
+  todos = data.todos || [];
+
+  // 처음 여는 오늘/미래 날짜면 AI 주간 계획(요일별)을 자동 반영
+  if (!raw && getMode() !== 'past') {
+    const weekly = JSON.parse(localStorage.getItem('plannerWeekly') || 'null');
+    if (weekly) {
+      const dow = days[viewDate.getDay()];
+      [...(weekly['매일'] || []), ...(weekly[dow] || [])].forEach(p => {
+        if (p && p.name && p.hours > 0) plans.push({ name: String(p.name), hours: +p.hours });
+      });
+    }
+  }
+  colorIdx = data.colorIdx || activities.length;
+
+  slots.forEach(s => { s.style.background = ''; s.title = ''; });
+  activities.forEach(a => a.indices.forEach(i => {
+    slots[i].style.background = a.color;
+    slots[i].title = a.name;
+  }));
+
+  renderDate();
+  applyMode();
+  renderLegend();
+  renderCommentArea();
+  renderPlanList();
+  renderTodos();
+}
+
+function applyMode() {
+  const mode = getMode();
+  document.getElementById('pageTitle').textContent = mode === 'future' ? '📝 하루 계획표' : '📝 하루 일과표';
+  document.getElementById('btnSubmit').style.display = mode === 'today' ? '' : 'none';
+  document.getElementById('commentArea').style.display = mode === 'future' ? 'none' : '';
+  // 계획: 미래엔 편집 가능, 오늘/과거엔 기록된 계획이 있으면 표시
+  const planBox = document.getElementById('planBox');
+  const planAdd = planBox.querySelector('.plan-add');
+  const futureOnly = [document.getElementById('btnAiPlan')];
+  if (mode === 'future') {
+    planBox.style.display = '';
+    planAdd.style.display = '';
+    futureOnly.forEach(el => el.style.display = '');
+    document.getElementById('planBoxTitle').textContent = '📋 대략적인 계획';
+  } else if (plans.length > 0) {
+    planBox.style.display = '';
+    planAdd.style.display = 'none';
+    futureOnly.forEach(el => el.style.display = 'none');
+    document.getElementById('planBoxTitle').textContent = mode === 'today' ? '📋 오늘의 계획' : '📋 이날의 계획';
+  } else {
+    planBox.style.display = 'none';
+  }
+  document.body.classList.toggle('readonly', mode === 'past');
+  // Todo: 오늘/미래엔 항상 표시, 과거엔 기록이 있을 때만 읽기 전용 표시
+  const todoBox = document.getElementById('todoBox');
+  const todoAdd = document.getElementById('todoAdd');
+  if (mode !== 'past') {
+    todoBox.style.display = '';
+    todoAdd.style.display = '';
+  } else if (todos.length > 0) {
+    todoBox.style.display = '';
+    todoAdd.style.display = 'none';
+  } else {
+    todoBox.style.display = 'none';
+  }
+}
+
+// ── Todo ──
+function renderTodos() {
+  const list = document.getElementById('todoList');
+  const readOnly = getMode() === 'past';
+  list.innerHTML = '';
+  if (todos.length === 0) {
+    list.innerHTML = '<div class="legend-empty">할 일을 추가해보세요</div>';
+    return;
+  }
+  todos.forEach((t, i) => {
+    const item = document.createElement('div');
+    item.className = 'plan-item todo-item' + (t.done ? ' done' : '');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = t.done;
+    cb.disabled = readOnly;
+    cb.addEventListener('change', () => {
+      t.done = cb.checked;
+      renderTodos();
+      saveDay();
+    });
+    const txt = document.createElement('span');
+    txt.className = 'txt';
+    txt.textContent = t.text;
+    const del = document.createElement('span');
+    del.className = 'del';
+    del.title = '삭제';
+    del.textContent = '✕';
+    if (readOnly) del.style.display = 'none';
+    del.addEventListener('click', () => {
+      todos.splice(i, 1);
+      renderTodos();
+      applyMode();
+      saveDay();
+    });
+    item.appendChild(cb);
+    item.appendChild(txt);
+    item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('btnAddTodo').addEventListener('click', addTodo);
+document.getElementById('todoInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
+
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  todos.push({ text, done: false });
+  input.value = '';
+  input.focus();
+  renderTodos();
+  saveDay();
+}
+
+// ── 드래그 선택 ──
+let dragging = false, startIdx = null, endIdx = null;
+
+function rangeIndices(a, b) {
+  const [lo, hi] = a <= b ? [a, b] : [b, a];
+  const r = [];
+  for (let i = lo; i <= hi; i++) r.push(i);
+  return r;
+}
+
+function clearPreview() {
+  slots.forEach(s => s.classList.remove('preview'));
+}
+
+function showPreview() {
+  clearPreview();
+  rangeIndices(startIdx, endIdx).forEach(i => slots[i].classList.add('preview'));
+}
+
+slots.forEach(td => {
+  td.addEventListener('mousedown', e => {
+    e.preventDefault();
+    if (getMode() === 'past') return;
+    dragging = true;
+    startIdx = endIdx = +td.dataset.index;
+    showPreview();
+  });
+  td.addEventListener('mouseenter', () => {
+    if (!dragging) return;
+    endIdx = +td.dataset.index;
+    showPreview();
+  });
+});
+
+document.addEventListener('mouseup', () => {
+  if (!dragging) return;
+  dragging = false;
+  openModal();
+});
+
+// ── 시간 포맷 ──
+function idxToTime(i) {
+  const h = Math.floor(i / 6), m = (i % 6) * 10;
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+// ── 모달 ──
+const overlay = document.getElementById('modalOverlay');
+const descInput = document.getElementById('descInput');
+
+function openModal() {
+  const [lo, hi] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
+  document.getElementById('modalTimeRange').textContent =
+    `${idxToTime(lo)} ~ ${idxToTime(hi + 1 > 143 ? 143 : hi + 1)}` + (hi === 143 ? ' (24:00)' : '');
+  overlay.classList.add('show');
+  renderPresetChips();
+  descInput.value = '';
+  setTimeout(() => descInput.focus(), 50);
+}
+
+function closeModal() {
+  overlay.classList.remove('show');
+  clearPreview();
+  startIdx = endIdx = null;
+}
+
+document.getElementById('btnCancel').addEventListener('click', closeModal);
+overlay.addEventListener('mousedown', e => { if (e.target === overlay) closeModal(); });
+descInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') confirmActivity();
+  if (e.key === 'Escape') closeModal();
+});
+document.getElementById('btnOk').addEventListener('click', confirmActivity);
+
+function confirmActivity() {
+  const name = descInput.value.trim();
+  if (!name) { descInput.focus(); return; }
+
+  const indices = rangeIndices(startIdx, endIdx);
+
+  // 같은 이름의 일과는 같은 색 재사용
+  let act = activities.find(a => a.name === name);
+  if (!act) {
+    act = { name, color: palette[colorIdx++ % palette.length], indices: new Set() };
+    activities.push(act);
+  }
+
+  indices.forEach(i => {
+    // 다른 일과가 차지하고 있던 칸은 그 일과에서 제거
+    activities.forEach(a => { if (a !== act) a.indices.delete(i); });
+    act.indices.add(i);
+    slots[i].style.background = act.color;
+    slots[i].title = name;
+  });
+
+  // 칸이 모두 사라진 일과 정리
+  for (let i = activities.length - 1; i >= 0; i--) {
+    if (activities[i].indices.size === 0) activities.splice(i, 1);
+  }
+
+  renderLegend();
+  saveDay();
+  closeModal();
+}
+
+// ── 범례 ──
+function renderLegend() {
+  const list = document.getElementById('legendList');
+  const mode = getMode();
+  list.innerHTML = '';
+  if (activities.length === 0) {
+    list.innerHTML = mode === 'past'
+      ? '<div class="legend-empty">기록된 일과가 없습니다</div>'
+      : '<div class="legend-empty">표를 드래그하여 일과를 추가하세요</div>';
+    return;
+  }
+  activities.forEach(act => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    const total = act.indices.size * 10;
+    const hrs = Math.floor(total / 60), mins = total % 60;
+    const dur = (hrs ? hrs + '시간 ' : '') + (mins ? mins + '분' : '');
+    item.innerHTML = `<span class="legend-swatch" style="background:${act.color}"></span>
+                      <span>${act.name} <small style="opacity:.8">(${dur.trim()})</small></span>
+                      <span class="del" title="삭제">✕</span>`;
+    if (mode === 'past') item.querySelector('.del').style.display = 'none';
+    item.querySelector('.del').addEventListener('click', () => {
+      act.indices.forEach(i => {
+        slots[i].style.background = '';
+        slots[i].title = '';
+      });
+      activities.splice(activities.indexOf(act), 1);
+      renderLegend();
+      saveDay();
+    });
+    list.appendChild(item);
+  });
+}
+// ── 질문 설정 ──
+let questions = JSON.parse(localStorage.getItem('plannerQuestions') || '[]');
+const answers = {}; // 화면 전환 시 답변 보존
+
+function saveQuestions() {
+  localStorage.setItem('plannerQuestions', JSON.stringify(questions));
+}
+
+function renderCommentArea() {
+  const area = document.getElementById('commentArea');
+  // 기존 입력값 보존
+  area.querySelectorAll('textarea').forEach(t => { answers[t.dataset.key] = t.value; });
+  area.innerHTML = '';
+  const readOnly = getMode() === 'past';
+  if (questions.length === 0) {
+    const ta = document.createElement('textarea');
+    ta.dataset.key = '__free__';
+    ta.placeholder = readOnly ? '' : '오늘 하루에 대한 의견을 자유롭게 적어보세요...';
+    ta.value = answers['__free__'] || '';
+    ta.readOnly = readOnly;
+    ta.addEventListener('input', saveDay);
+    area.appendChild(ta);
+  } else {
+    questions.forEach(q => {
+      const title = document.createElement('div');
+      title.className = 'q-title';
+      title.textContent = q;
+      const ta = document.createElement('textarea');
+      ta.className = 'q-answer';
+      ta.dataset.key = q;
+      ta.placeholder = readOnly ? '' : '대답을 적어보세요...';
+      ta.value = answers[q] || '';
+      ta.readOnly = readOnly;
+      ta.addEventListener('input', saveDay);
+      area.appendChild(title);
+      area.appendChild(ta);
+    });
+  }
+}
+
+// ── 계획 (미래 일자) ──
+function renderPlanList() {
+  const list = document.getElementById('planList');
+  list.innerHTML = '';
+  if (plans.length === 0) {
+    list.innerHTML = '<div class="legend-empty">계획을 추가해보세요</div>';
+    return;
+  }
+  plans.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'plan-item';
+    item.innerHTML = `<span>${p.name}</span><small style="opacity:.85">${p.hours}시간</small><span class="del" title="삭제">✕</span>`;
+    if (getMode() === 'past') item.querySelector('.del').style.display = 'none';
+    item.querySelector('.del').addEventListener('click', () => {
+      plans.splice(i, 1);
+      renderPlanList();
+      applyMode();
+      saveDay();
+    });
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('btnAddPlan').addEventListener('click', addPlan);
+document.getElementById('planName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlan(); });
+document.getElementById('planHours').addEventListener('keydown', e => { if (e.key === 'Enter') addPlan(); });
+
+function addPlan() {
+  const nameEl = document.getElementById('planName');
+  const hoursEl = document.getElementById('planHours');
+  const name = nameEl.value.trim();
+  const hours = parseFloat(hoursEl.value);
+  if (!name || !(hours > 0)) { (!name ? nameEl : hoursEl).focus(); return; }
+  plans.push({ name, hours });
+  nameEl.value = '';
+  hoursEl.value = '';
+  nameEl.focus();
+  renderPlanList();
+  saveDay();
+}
+
+// ── AI 계획 생성 ──
+document.getElementById('btnAiPlan').addEventListener('click', async () => {
+  const btn = document.getElementById('btnAiPlan');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 생성 중...';
+  try {
+    const res = await proxyFetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        profile: {
+          이름: profile.name || '',
+          생년월일: profile.birth || '',
+          직업: profile.job || '',
+          목표: profile.goal || '',
+          계획: profile.plan || ''
+        },
+        situation: profile.situation || '',
+        date: dateKey(viewDate),
+        dayOfWeek: days[viewDate.getDay()] + '요일',
+        presets
+      })
+    });
+    if (!res.ok) throw new Error('proxy error ' + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data.plans)) throw new Error('bad response');
+    data.plans.forEach(p => {
+      if (p.name && p.hours > 0) plans.push({ name: String(p.name), hours: +p.hours });
+    });
+    renderPlanList();
+    saveDay();
+  } catch (err) {
+    alert('AI 계획 생성에 실패했습니다.\n설정된 AI 프록시가 실행 중인지 확인해주세요.\n\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+});
+
+function renderQList() {
+  const list = document.getElementById('qList');
+  list.innerHTML = '';
+  if (questions.length === 0) {
+    list.innerHTML = '<div class="legend-empty">등록된 질문이 없습니다. 질문이 없으면 자유 의견란이 표시됩니다.</div>';
+    return;
+  }
+  questions.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'q-item';
+    item.innerHTML = `<span>${i + 1}. ${q}</span><span class="del" title="삭제">✕</span>`;
+    item.querySelector('.del').addEventListener('click', () => {
+      questions.splice(i, 1);
+      saveQuestions();
+      renderQList();
+      renderCommentArea();
+    });
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('btnAddQ').addEventListener('click', addQuestion);
+document.getElementById('qInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addQuestion();
+});
+
+function addQuestion() {
+  const input = document.getElementById('qInput');
+  const q = input.value.trim();
+  if (!q || questions.includes(q)) { input.focus(); return; }
+  questions.push(q);
+  saveQuestions();
+  input.value = '';
+  input.focus();
+  renderQList();
+  renderCommentArea();
+}
+
+// ── 자주 쓰는 일과 ──
+let presets = JSON.parse(localStorage.getItem('plannerPresets') || '[]');
+
+function savePresets() {
+  localStorage.setItem('plannerPresets', JSON.stringify(presets));
+}
+
+function renderPresetList() {
+  const list = document.getElementById('presetList');
+  list.innerHTML = '';
+  if (presets.length === 0) {
+    list.innerHTML = '<div class="legend-empty">등록된 일과가 없습니다.</div>';
+    return;
+  }
+  presets.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'q-item';
+    item.innerHTML = `<span>${p}</span><span class="del" title="삭제">✕</span>`;
+    item.querySelector('.del').addEventListener('click', () => {
+      presets.splice(i, 1);
+      savePresets();
+      renderPresetList();
+    });
+    list.appendChild(item);
+  });
+}
+
+document.getElementById('btnAddPreset').addEventListener('click', addPreset);
+document.getElementById('presetInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPreset();
+});
+
+function addPreset() {
+  const input = document.getElementById('presetInput');
+  const p = input.value.trim();
+  if (!p || presets.includes(p)) { input.focus(); return; }
+  presets.push(p);
+  savePresets();
+  input.value = '';
+  input.focus();
+  renderPresetList();
+}
+
+function renderPresetChips() {
+  const box = document.getElementById('presetChips');
+  box.innerHTML = '';
+  presets.forEach(p => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = p;
+    chip.addEventListener('click', () => {
+      descInput.value = p;
+      confirmActivity();
+    });
+    box.appendChild(chip);
+  });
+}
+
+// ── 프로필 ──
+const profileFields = { pfName: 'name', pfBirth: 'birth', pfJob: 'job', pfGoal: 'goal', pfSituation: 'situation', pfPlan: 'plan' };
+let profile = JSON.parse(localStorage.getItem('plannerProfile') || '{}');
+
+// HSEnginner 프로필 설정에서 넘어온 경우 URL 파라미터로 프로필 인계
+(function importProfileFromURL() {
+  const q = new URLSearchParams(location.search);
+  if (!q.has('from')) return;
+  const map = { name: 'name', birth: 'birth', job: 'job', goal: 'goal', situation: 'situation', plan: 'plan' };
+  let changed = false;
+  Object.entries(map).forEach(([param, key]) => {
+    const v = q.get(param);
+    if (v) { profile[key] = v; changed = true; }
+  });
+  if (changed) {
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+    localStorage.setItem('plannerOnboarded', '1'); // 외부에서 프로필 인계 시 온보딩 생략
+  }
+  history.replaceState(null, '', location.pathname);
+})();
+
+function updateGoalBanner() {
+  document.getElementById('goalBanner').textContent = profile.goal ? '🎯 ' + profile.goal : '';
+}
+
+Object.entries(profileFields).forEach(([id, key]) => {
+  const el = document.getElementById(id);
+  el.value = profile[key] || '';
+  el.addEventListener('input', () => {
+    profile[key] = el.value;
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+    if (key === 'goal') updateGoalBanner();
+  });
+});
+updateGoalBanner();
+
+// ── 화면 전환 ──
+function showView(view) {
+  document.getElementById('mainView').style.display = view === 'main' ? 'flex' : 'none';
+  document.getElementById('settingsView').style.display = view === 'settings' ? 'block' : 'none';
+  document.getElementById('overviewView').style.display = view === 'overview' ? 'block' : 'none';
+  document.getElementById('onboardView').style.display = view === 'onboard' ? 'block' : 'none';
+  const chrome = view !== 'onboard' ? '' : 'none';
+  document.getElementById('btnSettings').style.display = chrome;
+  document.getElementById('btnOverview').style.display = chrome;
+  document.querySelector('.date-badge').style.display = chrome;
+  document.getElementById('goalBanner').style.display = chrome;
+}
+
+// ── 온보딩 (최초 프로필 설정) ──
+const obFields = { obName: 'name', obBirth: 'birth', obJob: 'job', obGoal: 'goal', obSituation: 'situation', obPlan: 'plan' };
+
+Object.entries(obFields).forEach(([id, key]) => {
+  const el = document.getElementById(id);
+  el.value = profile[key] || '';
+  el.addEventListener('input', () => {
+    profile[key] = el.value;
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+  });
+});
+
+document.getElementById('btnObAiPlan').addEventListener('click', async () => {
+  const btn = document.getElementById('btnObAiPlan');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 생성 중...';
+  try {
+    const res = await proxyFetch('/longplan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: profilePayload(), presets })
+    });
+    if (!res.ok) throw new Error('proxy error ' + res.status);
+    const data = await res.json();
+    if (typeof data.plan !== 'string') throw new Error('bad response');
+    document.getElementById('obPlan').value = data.plan;
+    profile.plan = data.plan;
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+    if (data.weekly && typeof data.weekly === 'object') {
+      localStorage.setItem('plannerWeekly', JSON.stringify(data.weekly));
+    }
+  } catch (err) {
+    alert('AI 계획 생성에 실패했습니다.\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+});
+
+document.getElementById('btnStartPlanner').addEventListener('click', () => {
+  // 온보딩 → 설정창 프로필 필드 동기화
+  Object.entries(profileFields).forEach(([id, key]) => {
+    document.getElementById(id).value = profile[key] || '';
+  });
+  localStorage.setItem('plannerOnboarded', '1');
+  updateGoalBanner();
+  showView('main');
+});
+
+// 최초 방문(프로필 미설정)이면 온보딩부터 시작
+if (!localStorage.getItem('plannerOnboarded')) {
+  showView('onboard');
+}
+
+document.getElementById('btnSettings').addEventListener('click', () => {
+  renderCommentArea(); // 답변 보존
+  showView('settings');
+  renderQList();
+  renderPresetList();
+});
+
+document.getElementById('btnBack').addEventListener('click', () => {
+  showView('main');
+  renderCommentArea();
+});
+
+// ── 한눈에 보기 (캘린더) ──
+let calYear, calMonth; // 표시 중인 연/월
+
+const SCORE_COLORS = s => s >= 70 ? '#55efc4' : s >= 40 ? '#ffd93d' : '#ff6b6b';
+
+document.getElementById('btnOverview').addEventListener('click', () => {
+  saveDay();
+  calYear = viewDate.getFullYear();
+  calMonth = viewDate.getMonth();
+  renderCalendar();
+  showView('overview');
+});
+
+document.getElementById('btnOverviewBack').addEventListener('click', () => showView('main'));
+document.getElementById('calPrev').addEventListener('click', () => {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+});
+
+function renderCalendar() {
+  document.getElementById('calTitle').textContent = `${calYear}년 ${calMonth + 1}월`;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  days.forEach(d => {
+    const dow = document.createElement('div');
+    dow.className = 'dow';
+    dow.textContent = d;
+    grid.appendChild(dow);
+  });
+  const first = new Date(calYear, calMonth, 1);
+  const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
+  for (let i = 0; i < first.getDay(); i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell empty';
+    grid.appendChild(cell);
+  }
+  for (let d = 1; d <= lastDate; d++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    const cellDate = new Date(calYear, calMonth, d);
+    if (cellDate.getTime() === today.getTime()) cell.classList.add('today-cell');
+    let html = `<span>${d}</span>`;
+    const raw = localStorage.getItem('plannerDay:' + dateKey(cellDate));
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        if (typeof data.score === 'number') {
+          html += `<span class="score-badge" style="background:${SCORE_COLORS(data.score)}">${data.score}점</span>`;
+        }
+      } catch (_) {}
+    }
+    cell.innerHTML = html;
+    cell.addEventListener('click', () => {
+      viewDate = cellDate;
+      loadDay();
+      showView('main');
+    });
+    grid.appendChild(cell);
+  }
+}
+
+renderCommentArea();
+loadDay();
+
+function profilePayload() {
+  return {
+    이름: profile.name || '',
+    생년월일: profile.birth || '',
+    직업: profile.job || '',
+    목표: profile.goal || '',
+    현재상황: profile.situation || '',
+    계획: profile.plan || ''
+  };
+}
+
+// ── 설정창: 장기 계획 AI 생성 ──
+document.getElementById('btnAiLongPlan').addEventListener('click', async () => {
+  const btn = document.getElementById('btnAiLongPlan');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 생성 중...';
+  try {
+    const res = await proxyFetch('/longplan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: profilePayload(), presets })
+    });
+    if (!res.ok) throw new Error('proxy error ' + res.status);
+    const data = await res.json();
+    if (typeof data.plan !== 'string') throw new Error('bad response');
+    const el = document.getElementById('pfPlan');
+    el.value = data.plan;
+    profile.plan = data.plan;
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+    if (data.weekly && typeof data.weekly === 'object') {
+      localStorage.setItem('plannerWeekly', JSON.stringify(data.weekly));
+    }
+  } catch (err) {
+    alert('AI 계획 생성에 실패했습니다.\n설정된 AI 프록시가 실행 중인지 확인해주세요.\n\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+});
+
+// ── 설정창: 행동 패턴 기반 계획 업데이트 ──
+function collectHistory() {
+  const days = ['일','월','화','수','목','금','토'];
+  const history = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith('plannerDay:')) continue;
+    const dateStr = key.slice('plannerDay:'.length);
+    let data;
+    try { data = JSON.parse(localStorage.getItem(key)); } catch { continue; }
+    if (!data || !Array.isArray(data.activities) || !data.activities.length) continue;
+    const d = new Date(dateStr + 'T00:00:00');
+    history.push({
+      date: dateStr,
+      dayOfWeek: days[d.getDay()] + '요일',
+      activities: data.activities.map(a => ({
+        name: a.name,
+        hours: Math.round((a.indices || []).length * 10 / 6) / 10
+      })),
+      score: (typeof data.score === 'number') ? data.score : undefined
+    });
+  }
+  history.sort((a, b) => a.date.localeCompare(b.date));
+  return history.slice(-30);
+}
+
+document.getElementById('btnUpdatePlan').addEventListener('click', async () => {
+  const history = collectHistory();
+  if (!history.length) { alert('분석할 일과 기록이 아직 없습니다.\n일과표를 기록한 뒤 다시 시도해주세요.'); return; }
+  const btn = document.getElementById('btnUpdatePlan');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ 분석 중...';
+  try {
+    const res = await proxyFetch('/updateplan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: profilePayload(), history, presets })
+    });
+    if (!res.ok) throw new Error('proxy error ' + res.status);
+    const data = await res.json();
+    if (typeof data.plan !== 'string') throw new Error('bad response');
+    document.getElementById('pfPlan').value = data.plan;
+    profile.plan = data.plan;
+    localStorage.setItem('plannerProfile', JSON.stringify(profile));
+    if (data.weekly && typeof data.weekly === 'object') {
+      localStorage.setItem('plannerWeekly', JSON.stringify(data.weekly));
+    }
+    if (data.analysis) {
+      showFeedback(`<div style="font-size:1.2rem; font-weight:700; margin-bottom:10px;">🔄 계획 업데이트 완료</div><div style="margin-bottom:12px; line-height:1.6;"><b>행동 패턴 분석</b><br>${data.analysis}</div><div style="line-height:1.6;"><b>수정된 계획</b><br>${data.plan.replace(/\n/g, '<br>')}</div>`);
+    }
+  } catch (err) {
+    alert('계획 업데이트에 실패했습니다.\n설정된 AI 프록시가 실행 중인지 확인해주세요.\n\n' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+});
+
+// ── 피드백 모달 ──
+const feedbackOverlay = document.getElementById('feedbackOverlay');
+document.getElementById('btnFeedbackClose').addEventListener('click', () => feedbackOverlay.classList.remove('show'));
+
+function showFeedback(html) {
+  document.getElementById('feedbackBody').innerHTML = html;
+  feedbackOverlay.classList.add('show');
+}
+
+function renderFeedbackResult(fb) {
+  const scoreColor = fb.score >= 70 ? '#55efc4' : fb.score >= 40 ? '#ffd93d' : '#ff6b6b';
+  let html = `<div style="font-size:1.6rem; font-weight:700; color:${scoreColor}; margin-bottom:6px;">일치도 ${fb.score}점</div>`;
+  html += `<p style="margin-bottom:10px;">${fb.summary || ''}</p>`;
+  if (Array.isArray(fb.causes) && fb.causes.length) {
+    html += `<div style="font-weight:700; margin:10px 0 4px;">⚠️ 실패 원인 분석</div><ul style="padding-left:18px; margin:0;">`;
+    fb.causes.forEach(c => html += `<li style="margin-bottom:4px;">${c}</li>`);
+    html += `</ul>`;
+  }
+  if (Array.isArray(fb.improvements) && fb.improvements.length) {
+    html += `<div style="font-weight:700; margin:10px 0 4px;">💡 개선 방안</div><ul style="padding-left:18px; margin:0;">`;
+    fb.improvements.forEach(c => html += `<li style="margin-bottom:4px;">${c}</li>`);
+    html += `</ul>`;
+  }
+  showFeedback(html);
+}
+
+// 도움말은 기존 일과표 흐름을 방해하지 않도록 독립 모달로 동작하며,
+// 최초 안내 선택만 localStorage에 저장합니다.
+const helpOverlay = document.getElementById('helpOverlay');
+const helpHiddenKey = 'plannerHelpHidden';
+function closeHelp() {
+  helpOverlay.classList.remove('show');
+}
+function openHelp() {
+  helpOverlay.classList.add('show');
+  document.getElementById('btnHelpClose').focus();
+}
+document.getElementById('btnHelp').addEventListener('click', openHelp);
+document.getElementById('btnHelpClose').addEventListener('click', () => {
+  if (document.getElementById('hideHelp').checked) localStorage.setItem(helpHiddenKey, '1');
+  closeHelp();
+});
+helpOverlay.addEventListener('mousedown', e => { if (e.target === helpOverlay) closeHelp(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && helpOverlay.classList.contains('show')) closeHelp(); });
+
+if (!localStorage.getItem(helpHiddenKey)) {
+  setTimeout(openHelp, 250);
+}
+
+// ── 제출 ──
+document.getElementById('btnSubmit').addEventListener('click', async () => {
+  // 연속된 칸을 시간 구간으로 묶기
+  const schedule = activities.map(act => {
+    const sorted = [...act.indices].sort((a,b) => a-b);
+    const ranges = [];
+    let s = sorted[0], p = sorted[0];
+    for (let k = 1; k <= sorted.length; k++) {
+      if (k === sorted.length || sorted[k] !== p + 1) {
+        ranges.push(`${idxToTime(s)} ~ ${p === 143 ? '24:00' : idxToTime(p + 1)}`);
+        s = sorted[k];
+      }
+      p = sorted[k];
+    }
+    return { name: act.name, color: act.color, times: ranges, totalMinutes: act.indices.size * 10 };
+  });
+
+  const commentData = {};
+  document.querySelectorAll('#commentArea textarea').forEach(t => {
+    commentData[t.dataset.key === '__free__' ? '자유 의견' : t.dataset.key] = t.value.trim();
+  });
+
+  const data = {
+    date: dateKey(viewDate),
+    profile: profilePayload(),
+    schedule,
+    comments: commentData
+  };
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = '⏳ 피드백 분석 중...';
+  showFeedback('<p>⏳ AI가 장기 계획과 오늘의 일과를 비교 분석하고 있습니다...</p>');
+
+  try {
+    const res = await proxyFetch('/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile: profilePayload(), schedule, date: data.date, comments: commentData })
+    });
+    if (!res.ok) throw new Error('proxy error ' + res.status);
+    const fb = await res.json();
+    data.feedback = fb;
+    dayScore = fb.score;
+    saveDay();
+    renderFeedbackResult(fb);
+  } catch (err) {
+    showFeedback(`<p>피드백 생성에 실패했습니다. 설정된 AI 프록시를 확인해주세요.</p><p style="opacity:.8">${err.message}</p><p>일과표 파일은 정상적으로 다운로드됩니다.</p>`);
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `daily-plan-${data.date}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+
+  btn.disabled = false;
+  btn.textContent = '✓ 제출 완료';
+  btn.classList.add('done');
+  setTimeout(() => { btn.textContent = '제출하기'; btn.classList.remove('done'); }, 2000);
+});
+</script>
+</body>
+</html>
